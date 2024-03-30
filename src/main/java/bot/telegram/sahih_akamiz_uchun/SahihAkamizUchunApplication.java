@@ -70,6 +70,7 @@ public class SahihAkamizUchunApplication {
 		executor.setCorePoolSize(100);
 		executor.setMaxPoolSize(150);
 		executor.setQueueCapacity(120);
+		executor.setThreadNamePrefix("Sahih Print : ");
 		return executor;
 	}
 }
