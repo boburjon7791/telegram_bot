@@ -54,10 +54,10 @@ public class SahihAkamizUchunApplication {
 	// @Scheduled(cron = "0 0,10,20,30,40,50 * * * *")
 	public void deleteCachedImages(){
 		ServiceBot.cachedImages.entrySet()
-				  .removeIf(entry -> {
+				.removeIf(entry -> {
 					log.info("{} file was removed from caches",entry.getKey());
-				  return entry.getValue().isBefore(LocalDateTime.now());
-				  });
+				return entry.getValue().isBefore(LocalDateTime.now());
+				});
 	}
 	@Scheduled(cron = "0 0 0 1 * *")
 	public void deleteOldHistories(){
