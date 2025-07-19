@@ -53,9 +53,7 @@
         <thead>
           <tr>
             <th><h2>Nomi</h2></th>
-            <th><h2>Hisoblash turi</h2></th>
             <th><h2>Narxi</h2></th>
-            <th><h2>Valyutasi</h2></th>
             <th><h2>Video</h2></th>
             <th><h2>Rasmi</h2></th>
           </tr>
@@ -65,10 +63,15 @@
          <form action="/update/service" method="post" enctype="application/x-www-form-urlencoded">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <input type="hidden" name="id" th:value="${s.id}">
-            <td><input type="text" name="name" th:value="${s.name}" class="form-control w-auto" required></td>
-            <td><input type="text" name="type" th:value="${s.type}" class="form-control w-auto" required></td>
-            <td><input type="number" name="price" th:value="${s.price}" class="form-control w-auto" required></td>
-            <td><input type="text" name="currency" th:value="${s.currency}" required>
+            <td>
+                <input type="text" name="name" th:value="${s.name}" placeholder="Nomini kiriting" class="form-control w-auto" required>
+                <br>
+                <input type="text" name="type" th:value="${s.type}" placeholder="Hisoblash turini kiriting" class="form-control w-auto" required>
+            </td>
+            <td>
+                <input type="number" name="price" th:value="${s.price}" placeholder="Narxini kiriting" class="form-control w-auto" required>
+                <br>
+                <input type="text" name="currency" th:value="${s.currency}" placeholder="Valyutasini kiriting" class="form-control w-auto" required>
             <br>
             <input type="submit" class="btn btn-success" value="Yangilash">
         </form>
@@ -81,7 +84,7 @@
             </form>
         </td>
         <td>
-          <video id="myVideo" controls width="300px" th:src="@{'/video/'+${s.video}}">
+          <video id="myVideo" controls width="300px" th:src="@{'/video/'+${s.video}}" onerror="this.onerror=null; this.src='/error_pages/no-img.png'">
             <source type="video/mp4">
           </video>         
           <form th:action="'/update/video/'+${s.id}" method="post" enctype="multipart/form-data">
@@ -91,9 +94,16 @@
             <br>
             <input type="submit" class="btn btn-success" value="Yangilash">
           </form>
+          <form action="/service/delete-file" method="post" enctype="application/x-www-form-urlencoded">
+              <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+              <input type="hidden" name="id" th:value="${s.id}">
+              <input type="hidden" name="file" th:value="${s.video}">
+              <br>
+              <input type="submit" class="btn btn-danger" value="Videoni o'chirish">
+          </form>
         </td>
         <td>
-          <img th:src="'/image/'+${s.image}" height="150px" th:alt="${s.name}">
+          <img th:src="'/image/'+${s.image}" onerror="this.onerror=null; this.src='/error_pages/no-img.png'" height="150px" th:alt="${s.name}">
           <form th:action="'/update/image/'+${s.id}" method="post" enctype="multipart/form-data">
               <br>
               <input type="file" class="form-control w-auto" name="file">
@@ -101,6 +111,13 @@
             <br>
             <input type="submit" class="btn btn-success" value="Yangilash">
           </form>
+            <form action="/service/delete-file" method="post" enctype="application/x-www-form-urlencoded">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <input type="hidden" name="id" th:value="${s.id}">
+                <input type="hidden" name="file" th:value="${s.image}">
+                <br>
+                <input type="submit" class="btn btn-danger" value="Rasmni o'chirish">
+            </form>
         </td>
           </tr>
         </tbody>

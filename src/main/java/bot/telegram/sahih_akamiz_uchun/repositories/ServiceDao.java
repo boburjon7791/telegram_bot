@@ -1,6 +1,7 @@
 package bot.telegram.sahih_akamiz_uchun.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,12 @@ public interface ServiceDao extends JpaRepository<Service, Long>{
 
     @Query(value="select exists(from Service s where s.name=?1 and s.id<>?2)")
     boolean existsByNameAndIdNotMatches(String name, Long id);
+
+    @Query(nativeQuery = true, value = """
+            select case when :fileName = s.image then s.image
+                        when :fileName = s.video then s.video
+                        else null end
+            from Service s where s.id=:id
+            """)
+    Optional<String> findFileNameByIdAndFileName(Long id, String fileName);
 }

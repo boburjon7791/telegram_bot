@@ -48,12 +48,12 @@
           </div>
         </div>
       </nav>
-  <img src="/home_page.jpg" width="100%" alt="Home_page">
+  <img src="/home_page.jpg" width="100%" alt="Home_page" style="margin-bottom: 20px">
   <br>
-  <form method="post" enctype="application/x-www-form-urlencoded" action="/phone">
+  <form style="text-align: center; margin-bottom: 20px" method="post" enctype="application/x-www-form-urlencoded" action="/phone">
     <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-    <input type="text" name="phone" required class="form-control w-auto">
-    <input type="submit" value="Yangilash">
+    <input type="text" name="phone" placeholder="Telefon raqamn" required>
+    <input style="margin-top: 5px" type="submit" value="Yangilash">
   </form>
 </body>
 </html>

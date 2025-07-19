@@ -47,13 +47,11 @@ public class ServiceBotImpl implements ServiceBot{
         }
         saveOrUpdate(service);
     }
-    @Async
     public void saveOrUpdate(Service service){
         serviceDao.save(service);
     }
 
     @Override
-    @Async
     public void update(Service service) {
         if(!serviceDao.existsById(service.getId())){
             throw new NotFoundException("Servis topilmadi");
@@ -82,7 +80,6 @@ public class ServiceBotImpl implements ServiceBot{
 
     @Override
     @Transactional
-    @Async
     public void delete(Long id) {
         String sql= """
                 select image, video
@@ -102,7 +99,12 @@ public class ServiceBotImpl implements ServiceBot{
     }
 
     @Override
-    @Async
+    public void deleteServiceFile(Long id, String fileName){
+        serviceDao.findFileNameByIdAndFileName(id, fileName)
+                .ifPresent(this::deleteFile);
+    }
+
+    @Override
     public void deleteByName(String name) {
         serviceDao.deleteByName(name);
     }
@@ -141,6 +143,7 @@ public class ServiceBotImpl implements ServiceBot{
             Path path = Path.of(root + "/" + name);
             if (path.toFile().exists()) {
                 Files.delete(path);
+                log.info("{} file was deleted", name);
             }
         } catch (IOException e) {
             e.printStackTrace();

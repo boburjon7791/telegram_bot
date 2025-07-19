@@ -24,6 +24,7 @@ public interface ServiceBot {
     void update(Service service);
     Service get(Long id);
     void delete(Long id);
+    void deleteServiceFile(Long id, String fileName);
     void deleteByName(String name);
     List<Service> services();
     List<Service> servicesByName(String name);

@@ -120,6 +120,13 @@ public class WebController {
         serviceBot.delete(id);
         response.sendRedirect("/services");
     }
+
+    @PostMapping("service/delete-file")
+    public void deleteFile(@RequestParam("id") long id, @RequestParam("file") String file, HttpServletResponse response) throws IOException{
+        serviceBot.deleteServiceFile(id, file);
+        response.sendRedirect("/services");
+    }
+
     @GetMapping("/services")
     public String services(Model model){
         model.addAttribute("services",serviceBot.services());
@@ -130,8 +137,8 @@ public class WebController {
         model.addAttribute("services",serviceBot.servicesByName(name));
         return "services";
     }
-    @GetMapping("/phone/{phone}")
-    public void phone(@PathVariable("phone") String phone, HttpServletResponse response) throws Exception{
+    @PostMapping("/phone")
+    public void phone(@RequestParam("phone") String phone, HttpServletResponse response) throws Exception{
         utilsDao.setValueByKey(new Utils("phone", phone));
         response.sendRedirect("/");
     }
