@@ -33,7 +33,6 @@ public class HistoryServiceImpl implements HistoryService {
 
     @Override
     public List<History> historiesByDate(LocalDate localDate) {
-        System.out.println("localDate = " + localDate);
         List<History> histories;
         if (localDate==null) {
             histories = historyDao.findAll(PageRequest.of

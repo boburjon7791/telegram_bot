@@ -39,12 +39,12 @@ public class SahihAkamizUchunApplication {
 	private final HistoryDao historyDao;
 	@PostConstruct
 	public void init() throws TelegramApiException {
-		System.out.println("token = " + token);
 		TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
 		try {
-			telegramBotsApi.registerBot(new TelegramBotController(token,"sahih_print_bot",serviceBot,utilsDao));
+			TelegramBotController sahihPrintBot = new TelegramBotController(token, "sahih_print_bot", serviceBot, utilsDao);
+			telegramBotsApi.registerBot(sahihPrintBot);
 		} catch (TelegramApiException e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 	public static void main(String[] args) throws Exception {

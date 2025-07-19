@@ -8,30 +8,35 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Slf4j
 public class TelegramBotController extends TelegramLongPollingBot{
-    private String token;
-    private ServiceBot serviceBot;
+    private final ServiceBot serviceBot;
 
-    private UtilsDao utilsDao;
+    private final UtilsDao utilsDao;
 
-
-    private String name;
     public TelegramBotController(String token, String name, ServiceBot serviceBot, UtilsDao utilsDao){
         super(token);
-        this.name = name;
         this.serviceBot=serviceBot;
         this.utilsDao=utilsDao;
     }
@@ -71,12 +76,11 @@ public class TelegramBotController extends TelegramLongPollingBot{
                     return;
                 }
 
-                System.out.println("service.getName() = " + service.getName());
                 InlineKeyboardButton button=new InlineKeyboardButton("Barcha xizmatlar");
-            button.setCallbackData("/services");
-            InlineKeyboardMarkup markup=new InlineKeyboardMarkup();
-            markup.setKeyboard(List.of(List.of(button)));
-            Utils utils = utilsDao.getValueByKey("phone");
+                button.setCallbackData("/services");
+                InlineKeyboardMarkup markup=new InlineKeyboardMarkup();
+                markup.setKeyboard(List.of(List.of(button)));
+                Utils utils = utilsDao.getValueByKey("phone");
 
                 SendMessage sendMessage= new SendMessage();
                 String message2="Xizmat turi : "+service.getName()+"\n"+"Xizmat narxi : 1 "+service.getType()+
@@ -86,22 +90,45 @@ public class TelegramBotController extends TelegramLongPollingBot{
                 sendMessage(sendMessage);
 
                 try {
-                    SendPhoto sendPhoto=new SendPhoto();
-                    sendPhoto.setChatId(chatId);
-                    sendPhoto.setPhoto(new InputFile(serviceBot.getFile2(service.getImage())));
-                    sendPhoto(sendPhoto);
+                    if (service.getImageId() != null && service.getImageChatId() != null) {
+                        ForwardMessage forwardMessage = new ForwardMessage();
+                        forwardMessage.setChatId(chatId);
+                        forwardMessage.setFromChatId(service.getImageChatId());
+                        forwardMessage.setMessageId(Integer.parseInt(service.getImageId()));
+                        execute(forwardMessage);
+                    }else {
+                        SendPhoto sendPhoto=new SendPhoto();
+                        sendPhoto.setChatId(chatId);
+                        sendPhoto.setPhoto(new InputFile(serviceBot.getFile2(service.getImage())));
+                        Message sentMessage = sendPhoto(sendPhoto);
+                        service.setImageId(sentMessage.getMessageId().toString());
+                        service.setImageChatId(chatId.toString());
+                        serviceBot.update(service);
+
+                    }
                 }catch (Exception e){
-                    log.error(service.getName()+" : "+service.getImage()+" rasm jo'natib bo'lmadi");
+                    log.error(service.getName()+" : "+service.getImage()+" rasm jo'natib bo'lmadi", e);
                 }
 
                 try {
-                    SendVideo sendVideo=new SendVideo();
-                    sendVideo.setChatId(chatId);
-                    File video = serviceBot.getFile2(service.getVideo());
-                    sendVideo.setVideo(new InputFile(video));
-                    sendVideo(sendVideo);
+                    if (service.getVideoId()!=null && service.getVideoChatId() != null) {
+                        ForwardMessage forwardMessage = new ForwardMessage();
+                        forwardMessage.setChatId(chatId);
+                        forwardMessage.setFromChatId(service.getVideoChatId());
+                        forwardMessage.setMessageId(Integer.parseInt(service.getVideoId()));
+                        execute(forwardMessage);
+                    }else {
+                        SendVideo sendVideo=new SendVideo();
+                        sendVideo.setChatId(chatId);
+                        File video = serviceBot.getFile2(service.getVideo());
+                        sendVideo.setVideo(new InputFile(video));
+                        Message sentVideo = sendVideo(sendVideo);
+                        service.setVideoId(sentVideo.getMessageId().toString());
+                        service.setVideoChatId(chatId.toString());
+                        serviceBot.update(service);
+                    }
                 }catch (Exception e){
-                    log.error(service.getName()+" : "+service.getVideo()+" video jo'natib bo'lmadi");
+                    log.error(service.getName()+" : "+service.getVideo()+" video jo'natib bo'lmadi", e);
                 }
 
             } catch (Exception e) {
@@ -118,80 +145,111 @@ public class TelegramBotController extends TelegramLongPollingBot{
     }
     @Async
     @SneakyThrows
-    public void sendPhoto(SendPhoto sendPhoto){
+    public Message sendPhoto(SendPhoto sendPhoto){
         log.info("Sending photo");
-        execute(sendPhoto);
+        Message message = execute(sendPhoto);
         log.info("Send photo");
+        return message;
     }
 
     @Async
     @SneakyThrows
-    public void sendVideo(SendVideo sendVideo){
+    public Message sendVideo(SendVideo sendVideo){
         log.info("Sending video");
-        execute(sendVideo);
+        Message message = execute(sendVideo);
         log.info("Send video");
+        return message;
     }
 
     @SneakyThrows
     @Async
-public void services(Update update) {
-    InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-    List<InlineKeyboardButton> rows = new ArrayList<>();
-    List<Service> services;
-        System.out.println("update.getMessage().getChatId() = " + update.getMessage().getChatId());
-        System.out.println("update.getMessage().getText() = " + update.getMessage().getText());
+    public void services(Update update) {
+        List<InlineKeyboardMarkup> markups = new ArrayList<>();
+        List<Service> services;
         try {
-        services=serviceBot.services();
+            services=serviceBot.services();
             if (services.isEmpty()) {
                 throw new RuntimeException("Servislar mavjud emas");
             }
-    } catch (Exception e) {
-        SendMessage sendMessage= new SendMessage();
+        } catch (Exception e) {
+            SendMessage sendMessage= new SendMessage();
+            sendMessage.setChatId(update.getMessage().getChatId());
+            sendMessage.setText(e.getMessage());
+            return;
+        }
+
+        AtomicInteger atomicInteger=new AtomicInteger(0);
+        services.forEach(s-> {
+            InlineKeyboardButton button=new InlineKeyboardButton(s.getName());
+            button.setCallbackData("service_"+s.getId().toString());
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            inlineKeyboardMarkup.setKeyboard(List.of(List.of(button)));
+            markups.add(inlineKeyboardMarkup);
+        });
+        // Set the keyboard to the markup
+        // Add it to the message
+        SendMessage sendMessage=new SendMessage();
         sendMessage.setChatId(update.getMessage().getChatId());
-        sendMessage.setText(e.getMessage());
-        return;
-    }
-    
-    services.forEach(s-> {
-        InlineKeyboardButton button=new InlineKeyboardButton(s.getName());
-        button.setCallbackData("service_"+s.getId().toString());
-        rows.add(button);
-    }
-    );
-    markup.setKeyboard(List.of(rows));
-    // Set the keyboard to the markup
-    // Add it to the message
-     SendMessage sendMessage=new SendMessage();
-     sendMessage.setChatId(update.getMessage().getChatId());
-     sendMessage.setText("Servislar");
-     sendMessage.setReplyMarkup(markup);
-     execute(sendMessage);
+        sendMessage.setText("Servislar:");
+        execute(sendMessage);
+
+        markups.forEach(replyMarkup -> {
+        SendMessage sendButton=new SendMessage();
+        sendButton.setReplyMarkup(replyMarkup);
+        sendButton.setText(String.valueOf(atomicInteger.incrementAndGet()));
+        sendButton.setChatId(update.getMessage().getChatId());
+        try {
+            execute(sendButton);
+        } catch (TelegramApiException e) {
+            log.error("error : ",e);
+        }
+    });
 }
 @Override
 @SneakyThrows
 @Async
 public void onUpdateReceived(Update update) {
-    String message;
-    try {
-        message=update.getMessage().getText();
-    }catch (Exception e){
+    String message=update.getMessage()!=null?update.getMessage().getText():"";
+    if (update.getCallbackQuery()!=null && update.getCallbackQuery().getData().startsWith("service_")) {
         message=update.getCallbackQuery().getData();
-    }
-    if (message.startsWith("service_") && message.substring(message.lastIndexOf("_")+1).matches("[0-9]")) {
         selectService(message, update.getCallbackQuery().getMessage().getChatId());
+        sendCommands(update);
         return;
     }
     switch (message) {
         case "/services"-> services(update);
         case "/start" -> start(update);
         default->{
+            if (update.getMessage()==null) {
+                sendCommands(update);
+                return;
+            }
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(update.getMessage().getChatId());
             sendMessage.setText("Xatolik sodir bo'ldi");
             sendMessage(sendMessage);
         }
     }
+    sendCommands(update);
 }
+
+public void sendCommands(Update update){
+    List<BotCommand> commandList = new ArrayList<>();
+    commandList.add(new BotCommand("/start", "Botni ishga tushirish"));
+    commandList.add(new BotCommand("/services", "Xizmatalar"));
+//    commandList.add(new BotCommand("/info", "Bot haqida ma'lumot"));
+
+    SetMyCommands setMyCommands = new SetMyCommands();
+    setMyCommands.setCommands(commandList);
+    setMyCommands.setScope(new BotCommandScopeDefault()); // umumiy holat uchun
+
+    try {
+        execute(setMyCommands);
+    } catch (TelegramApiException e) {
+        e.printStackTrace();
+    }
+}
+
 
     @Override
     public String getBotUsername() {

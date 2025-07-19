@@ -3,6 +3,7 @@ package bot.telegram.sahih_akamiz_uchun.controllers;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import java.util.Objects;
 import bot.telegram.sahih_akamiz_uchun.entities.History;
 import bot.telegram.sahih_akamiz_uchun.exceptions.BadRequestException;
 import bot.telegram.sahih_akamiz_uchun.services.HistoryService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -116,7 +118,6 @@ public class WebController {
     @PostMapping("/delete/service")
     public void deleteService(@RequestParam("id") long id, HttpServletResponse response) throws IOException{
         serviceBot.delete(id);
-        System.out.println("id = "+id);
         response.sendRedirect("/services");
     }
     @GetMapping("/services")
@@ -184,7 +185,8 @@ public class WebController {
         response.sendRedirect("/services");
     }
     @GetMapping("/history/create")
-    public String historyCreate(){
+    public String historyCreate(Model model){
+        model.addAttribute("now", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));
         return "history_create";
     }
     @PostMapping("/history/create")
@@ -192,14 +194,12 @@ public class WebController {
         if(history.getDateTime()==null){
             history.setDateTime(LocalDateTime.now());
         }
-        System.out.println("history.getDateTime() = " + history.getDateTime());
         historyService.save(history);
         response.sendRedirect("/histories");
     }
     @GetMapping("/histories")
-    public String histories(@RequestParam(required = false,name = "date")LocalDate date,Model model){
+    public String histories(@RequestParam(required = false,name = "date")LocalDate date, Model model, HttpServletRequest request){
         List<History> histories = historyService.historiesByDate(date);
-        System.out.println("date = " + date);
         model.addAttribute("histories",histories);
         return "histories";
     }

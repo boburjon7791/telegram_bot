@@ -65,10 +65,10 @@
                         <h2>Yangi klient qo'shish</h2>
                           <br>
                           <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                          <label>Vaqtini kiriting( Agar tanlamasangiz bugungi sana va vaqt yoziladi )</label>
-                          <input class="form-control w-auto" type="datetime-local" name="dateTime" placeholder="Vaqtini kiriting"><br>
+                          <label>Vaqtini kiriting</label>
+                          <input class="form-control w-auto" type="datetime-local" name="dateTime" th:value="${now}" placeholder="Vaqtini kiriting"><br>
                           <br>
-                          <label>Telefon raqamini kiriting( + ni kiritish shart emas )</label>
+                          <label>Telefon raqamini kiriting</label>
                           <input class="form-control w-auto" type="text" name="phone"  value="+998" placeholder="Klient telefon raqamini kiriting" required>
                           <br>
                           <label>Servis nomini kiriting</label>

@@ -63,10 +63,14 @@ public class ServiceBotImpl implements ServiceBot{
         }
         Service service2=serviceDao.findById(service.getId())
                           .orElseThrow(()->new NotFoundException("Topilmadi"));
-        service2.setName(service.getName());
-        service2.setCurrency(service.getCurrency());
-        service2.setPrice(service.getPrice());
-        service2.setType(service.getType());
+        service2.setName(service.getName()!=null ? service.getName() : service2.getName());
+        service2.setCurrency(service.getCurrency() != null ? service.getCurrency() : service2.getCurrency());
+        service2.setPrice(service.getPrice()!=null ? service.getPrice() : service2.getPrice());
+        service2.setImageId(service.getImageId() != null ? service.getImageId() : service2.getImageId());
+        service2.setImageChatId(service.getImageChatId() != null ? service.getImageChatId() : service2.getImageChatId());
+        service2.setVideoId(service.getVideoId() != null ? service.getVideoId() : service2.getVideoId());
+        service2.setVideoChatId(service.getVideoChatId() != null ? service.getVideoChatId() : service2.getVideoChatId());
+        service2.setType(service.getType() != null ? service.getType() : service2.getType());
         saveOrUpdate(service2);
     }
 
@@ -193,7 +197,8 @@ public class ServiceBotImpl implements ServiceBot{
         }
         String sql2="""
                 update service
-                set video=:name
+                set video=:name,
+                    video_id=null
                 where id=:id
                 """;
         log.info(name+" "+id);
@@ -218,7 +223,8 @@ public class ServiceBotImpl implements ServiceBot{
         }
         String sql2="""
                 update service
-                set image=:name
+                set image=:name,
+                    image_id=null
                 where id=:id
                 """;
         Map<String, Object> params=Map.of("id",id,"name",name);

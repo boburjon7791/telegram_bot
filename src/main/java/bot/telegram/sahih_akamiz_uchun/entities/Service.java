@@ -45,8 +45,16 @@ public class Service {
     @Builder.Default
     private String image="no";
 
+    private String imageId;
+
+    private String imageChatId;
+
     @Builder.Default
     private String video="no";
+
+    private String videoId;
+
+    private String videoChatId;
 
     @OneToMany
     private Set<History> historySet;
